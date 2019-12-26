@@ -1,16 +1,18 @@
 package Games::SpaceEngineers::BluePrint::Role::XMLHandler;
-our $VERSION = '0.02';
+our $VERSION = '0.04';
 
-##~ DIGEST : ff5b2c58f984d755d90bb5ecef41f588
+##~ DIGEST : f501a3fe8be8e3021639fdeaf470ecd1
 # ABSTRACT: Moose role for constructing SE blueprint XML using XML::LibXML with guard rails
 use Moo::Role;
 use Carp qw/confess/;
 use XML::LibXML;
 use XML::LibXML::PrettyPrint;
+
 sub get_xml_component {
 	my ( $self, $p ) = @_;
 	my $eparams = {%{$p}};
 	for ( qw/ SubtypeName/ ) {
+
 		confess "Missing element [$_]" unless defined($eparams->{$_});
 	}
 
@@ -18,15 +20,21 @@ sub get_xml_component {
 	my $this_block = XML::LibXML::Element->new( 'MyObjectBuilder_CubeBlock' );
 	my $subtype_block = XML::LibXML::Element->new( 'SubtypeName' );
 	$subtype_block->appendText($p->{SubtypeName});
+
+		confess "Missing element [$_]" unless defined( $eparams->{$_} );
+	}
+
+	# 'The Thing'
+	my $this_block    = XML::LibXML::Element->new( 'MyObjectBuilder_CubeBlock' );
+	my $subtype_block = XML::LibXML::Element->new( 'SubtypeName' );
+	$subtype_block->appendText( $p->{SubtypeName} );
+
 	$this_block->addChild( $subtype_block );
 
 	#The actual block type, e.g. heavy armor, refinery etc
 	my $component = XML::LibXML::Element->new( 'SubtypeName' );
 
 	$this_block->setAttribute( 'xsi:type', 'MyObjectBuilder_CubeBlock' );
-
-
-
 
 
 	#Wild mass guessing suggests this is to do with owner attributes,e.g. who owns a turret
@@ -48,21 +56,23 @@ sub get_xml_component {
 }
 
 
-sub set_position { 
-	my ($self,$this_block,$p) = @_;
+sub set_position {
+	my ( $self, $this_block, $p ) = @_;
 
 	for ( qw/x y z / ) {
-		confess "Missing element [$_]" unless defined($p->{$_});
+		confess "Missing element [$_]" unless defined( $p->{$_} );
 	}
-	
+
 	my $min = XML::LibXML::Element->new( 'Min' );
 	for ( qw/x y z/ ) {
 		$min->setAttribute( $_, $p->{$_} );
 	}
+
 	$this_block->addChild( $min );
 	return $this_block;
 
 }
+
 
 
 sub set_orientation { 
@@ -71,6 +81,14 @@ sub set_orientation {
 	$p ||= {};
 	my $orientation = XML::LibXML::Element->new( 'BlockOrientation' );
 	
+
+sub set_orientation {
+
+	my ( $self, $this_block, $p ) = @_;
+	$p ||= {};
+	my $orientation = XML::LibXML::Element->new( 'BlockOrientation' );
+
+
 	$orientation->setAttribute( 'Forward', $p->{Forward} || 'Forward' );
 	$orientation->setAttribute( 'Up',      $p->{Up}      || 'Up' );
 	$this_block->addChild( $orientation );
@@ -78,15 +96,18 @@ sub set_orientation {
 
 }
 
-sub set_colour { 
-	my ($self,$this_block,$colour_proto) = @_;
-	my $this_colour = $colour_proto->cloneNode(1);
+sub set_colour {
+	my ( $self, $this_block, $colour_proto ) = @_;
+	my $this_colour = $colour_proto->cloneNode( 1 );
 	$this_block->addChild( $this_colour );
 }
 
 # because colour order matters and has to come after position ?!!?!
-sub get_colour_proto { 
-	my ($self,$p) = @_;
+
+
+sub get_colour_proto {
+	my ( $self, $p ) = @_;
+
 
 	my $colour_block = XML::LibXML::Element->new( 'ColorMaskHSV' );
 
@@ -94,11 +115,12 @@ sub get_colour_proto {
 	my ( $h, $s, $v ) = $self->rgb_to_hsv( $p->{r}, $p->{g}, $p->{b} );
 
 	#yes really, xyz
-	$colour_block->setAttribute( 'x', substr($h || 0,undef,4) );
-	$colour_block->setAttribute( 'y', substr($s|| 0,undef,4) );
-	$colour_block->setAttribute( 'z', substr($v|| 0,undef,4 ));
+	$colour_block->setAttribute( 'x', $h );
+	$colour_block->setAttribute( 'y', $s );
+	$colour_block->setAttribute( 'z', $v );
 	return $colour_block;
-	
+
+
 }
 
 sub rgb_to_hsv {
@@ -118,6 +140,7 @@ sub rgb_to_hsv {
 
 sub render_xml {
 	my ( $self, $xml_obj ) = @_;
+
 	XML::LibXML::PrettyPrint->new( indent_string => '', new_line => '' )->pretty_print( $xml_obj );
 
 }

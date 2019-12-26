@@ -1,7 +1,7 @@
 package Data::Cartesian::3D::Class::FileHandler::SpaceEngineersBlueprint;
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
-##~ DIGEST : 1045fdb9eb159e8b5210aaaa4491e3c9
+##~ DIGEST : 07b91796ad5f43c54f03e17f6e5bf192
 use Moo;
 use XML::LibXML;
 use Carp qw/confess/;
@@ -33,7 +33,6 @@ sub write {
 	my $colour_defs = {};
 	use Data::Dumper;
 
-
 	my $particle_defs = {};
 
 	# TODO persist ?
@@ -41,6 +40,7 @@ sub write {
 		sub {
 			my ( $def, $id ) = @_;
 			use Data::Dumper;
+
 			$def = $self->translate_particle($def);
 
 			$particle_defs->{$id}->{component} = $self->get_xml_component($def);
@@ -52,10 +52,23 @@ sub write {
 
 	my $root_element = XML::LibXML::Element->new('CubeBlocks');
 
+			$def = $self->translate_particle( $def );
+
+			$particle_defs->{$id}->{component} = $self->get_xml_component( $def );
+			$particle_defs->{$id}->{colour}    = $self->get_colour_proto( $def );
+
+			return;
+		}
+	);
+
+	my $root_element = XML::LibXML::Element->new( 'CubeBlocks' );
+
+
 	$self->dc3->parse_cube(
 		sub {
 			my ( $x, $y, $z, $id ) = @_;
 			warn "parse $id";
+
 			my $this_block = $particle_defs->{$id}->{component}->cloneNode(1);
 			$self->set_position($this_block,{
 				'x' => $x,
@@ -67,10 +80,27 @@ sub write {
 			# TODO handle orientation intelligently 
 			#$self->set_orientation($this_block);
 			$root_element->addChild($this_block);
+
+			my $this_block = $particle_defs->{$id}->{component}->cloneNode( 1 );
+			$self->set_position(
+				$this_block,
+				{
+					'x' => $x,
+					'y' => $y,
+					'z' => $z,
+				}
+			);
+			$self->set_colour( $this_block, $particle_defs->{$id}->{colour} );
+
+			# TODO handle orientation intelligently
+			$self->set_orientation( $this_block );
+			$root_element->addChild( $this_block );
+
 			return;
 		},
 		$settings
 	);
+
 	
 	my $grid_string = $self->render_xml($root_element);
 	
@@ -82,14 +112,18 @@ sub write {
 	open (my $ofh, '>:raw', $path) or die "Failed to open output file : $!";
 	print $ofh $fullstring;
 	close ($ofh);
+
 	return;
 }
 
 =head3 translate_particle
 	Rewrite candidate - turn some internal format into something else - typically colour definitions into corresponding blocks
 =cut
-sub translate_particle { 
-	my ($self,$def)  = @_;
+
+
+sub translate_particle {
+	my ( $self, $def ) = @_;
+
 	return $def;
 }
 
