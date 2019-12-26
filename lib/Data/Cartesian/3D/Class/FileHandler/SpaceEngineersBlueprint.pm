@@ -3,7 +3,9 @@ our $VERSION = '0.02';
 
 ##~ DIGEST : 1045fdb9eb159e8b5210aaaa4491e3c9
 use Moo;
+use XML::LibXML;
 use Carp qw/confess/;
+with qw/Games::SpaceEngineers::BluePrint::Role::XMLHandler/;
 
 INITPARAMS: {
 	OBJECTS: {
@@ -30,37 +32,65 @@ sub write {
 
 	my $colour_defs = {};
 	use Data::Dumper;
-	my $gdi = GD::Image->new( $settings->{to}->{x}, $settings->{to}->{y} );
-	$gdi->trueColor( 1 );
 
-	# TODO enable colour allocation on demand ?
+
+	my $particle_defs = {};
+
 	# TODO persist ?
 	$self->dc3->parse_particles(
 		sub {
 			my ( $def, $id ) = @_;
+			use Data::Dumper;
+			$def = $self->translate_particle($def);
 
-			for ( qw/r g b / ) {
-				confess "Cannot translate particle $id - doesn't have a $_ value" unless defined( $def->{$_} );
-			}
-			my $colour = $gdi->colorAllocate( $def->{r}, $def->{g}, $def->{b} );
-			$colour_defs->{$id} = $colour;
-			return;
+			$particle_defs->{$id}->{component} = $self->get_xml_component($def);
+			$particle_defs->{$id}->{colour} = $self->get_colour_proto($def);
+			
+			return ;
 		}
 	);
+
+	my $root_element = XML::LibXML::Element->new('CubeBlocks');
 
 	$self->dc3->parse_cube(
 		sub {
 			my ( $x, $y, $z, $id ) = @_;
-			$gdi->setPixel( $x, $y, $colour_defs->{$id} );
+			warn "parse $id";
+			my $this_block = $particle_defs->{$id}->{component}->cloneNode(1);
+			$self->set_position($this_block,{
+				'x' => $x,
+				'y' => $y,
+				'z' => $z,
+			});
+			$self->set_colour($this_block,$particle_defs->{$id}->{colour});
+			
+			# TODO handle orientation intelligently 
+			#$self->set_orientation($this_block);
+			$root_element->addChild($this_block);
 			return;
 		},
 		$settings
 	);
-
-	open( my $ofh, '>:raw', $path ) or die "Failed to open output file [$settings->{ofn}] : $!";
-	print $ofh $gdi->png();
-	close( $ofh );
+	
+	my $grid_string = $self->render_xml($root_element);
+	
+	
+	
+	my $fullstring = $self->render_in_template({
+		grid_string => $grid_string
+	});
+	open (my $ofh, '>:raw', $path) or die "Failed to open output file : $!";
+	print $ofh $fullstring;
+	close ($ofh);
 	return;
+}
+
+=head3 translate_particle
+	Rewrite candidate - turn some internal format into something else - typically colour definitions into corresponding blocks
+=cut
+sub translate_particle { 
+	my ($self,$def)  = @_;
+	return $def;
 }
 
 1;
