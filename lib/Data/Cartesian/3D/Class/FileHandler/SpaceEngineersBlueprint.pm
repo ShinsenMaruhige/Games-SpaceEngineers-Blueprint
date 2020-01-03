@@ -1,16 +1,16 @@
 package Data::Cartesian::3D::Class::FileHandler::SpaceEngineersBlueprint;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
-##~ DIGEST : 07b91796ad5f43c54f03e17f6e5bf192
+##~ DIGEST : 6e37e68d744d70bbc7101f4acd50fa9c
 use Moo;
 use XML::LibXML;
 use Carp qw/confess/;
 with qw/Games::SpaceEngineers::BluePrint::Role::XMLHandler/;
 
 INITPARAMS: {
-	OBJECTS: {
-		has dc3 => ( is => 'rw', required => 1 );
-	}
+  OBJECTS: {
+        has dc3 => ( is => 'rw', required => 1 );
+    }
 }
 
 # TODO refactor out into generic GD reader, writer has to be PNG apparently
@@ -22,109 +22,103 @@ INITPARAMS: {
 =cut
 
 sub read {
-	my ( $self, $path, $settings ) = @_;
-	confess( "Not Implemented yet" );
+    my ( $self, $path, $settings ) = @_;
+    confess("Not Implemented yet");
 }
 
 sub write {
-	my ( $self, $path, $settings ) = @_;
-	confess "Output file name not defined" unless $path;
+    my ( $self, $path, $settings ) = @_;
+    confess "Output file name not defined" unless $path;
 
-	my $colour_defs = {};
-	use Data::Dumper;
+    my $colour_defs = {};
+    use Data::Dumper;
 
-	my $particle_defs = {};
+    my $particle_defs = {};
 
-	# TODO persist ?
-	$self->dc3->parse_particles(
-		sub {
-			my ( $def, $id ) = @_;
-			use Data::Dumper;
+    # TODO persist ?
+    $self->dc3->parse_particles(
+        sub {
+            my ( $def, $id ) = @_;
+            use Data::Dumper;
 
-			$def = $self->translate_particle($def);
+            $def = $self->translate_particle($def);
 
-			$particle_defs->{$id}->{component} = $self->get_xml_component($def);
-			$particle_defs->{$id}->{colour} = $self->get_colour_proto($def);
-			
-			return ;
-		}
-	);
+            $particle_defs->{$id}->{component} = $self->get_xml_component($def);
+            $particle_defs->{$id}->{colour}    = $self->get_colour_proto($def);
 
-	my $root_element = XML::LibXML::Element->new('CubeBlocks');
+            return;
+        }
+    );
 
-			$def = $self->translate_particle( $def );
+    my $root_element = XML::LibXML::Element->new('CubeBlocks');
 
-			$particle_defs->{$id}->{component} = $self->get_xml_component( $def );
-			$particle_defs->{$id}->{colour}    = $self->get_colour_proto( $def );
+    $def = $self->translate_particle($def);
 
-			return;
-		}
-	);
+    $particle_defs->{$id}->{component} = $self->get_xml_component($def);
+    $particle_defs->{$id}->{colour}    = $self->get_colour_proto($def);
 
-	my $root_element = XML::LibXML::Element->new( 'CubeBlocks' );
+    return;
+} );
 
+my $root_element = XML::LibXML::Element->new('CubeBlocks');
 
-	$self->dc3->parse_cube(
-		sub {
-			my ( $x, $y, $z, $id ) = @_;
-			warn "parse $id";
+$self->dc3->parse_cube( sub {
+          my ( $x, $y, $z, $id ) = @_;
+          warn "parse $id";
 
-			my $this_block = $particle_defs->{$id}->{component}->cloneNode(1);
-			$self->set_position($this_block,{
-				'x' => $x,
-				'y' => $y,
-				'z' => $z,
-			});
-			$self->set_colour($this_block,$particle_defs->{$id}->{colour});
-			
-			# TODO handle orientation intelligently 
-			#$self->set_orientation($this_block);
-			$root_element->addChild($this_block);
+          my $this_block = $particle_defs->{$id}->{component}->cloneNode(1);
+          $self->set_position(
+              $this_block,
+              {
+                  'x' => $x,
+                  'y' => $y,
+                  'z' => $z,
+              }
+          );
+          $self->set_colour( $this_block, $particle_defs->{$id}->{colour} );
 
-			my $this_block = $particle_defs->{$id}->{component}->cloneNode( 1 );
-			$self->set_position(
-				$this_block,
-				{
-					'x' => $x,
-					'y' => $y,
-					'z' => $z,
-				}
-			);
-			$self->set_colour( $this_block, $particle_defs->{$id}->{colour} );
+          # TODO handle orientation intelligently
+          #$self->set_orientation($this_block);
+          $root_element->addChild($this_block);
 
-			# TODO handle orientation intelligently
-			$self->set_orientation( $this_block );
-			$root_element->addChild( $this_block );
+          my $this_block = $particle_defs->{$id}->{component}->cloneNode(1);
+          $self->set_position(
+              $this_block,
+              {
+                  'x' => $x,
+                  'y' => $y,
+                  'z' => $z,
+              }
+          );
+          $self->set_colour( $this_block, $particle_defs->{$id}->{colour} );
 
-			return;
-		},
-		$settings
-	);
+          # TODO handle orientation intelligently
+          $self->set_orientation($this_block);
+          $root_element->addChild($this_block);
 
-	
-	my $grid_string = $self->render_xml($root_element);
-	
-	
-	
-	my $fullstring = $self->render_in_template({
-		grid_string => $grid_string
-	});
-	open (my $ofh, '>:raw', $path) or die "Failed to open output file : $!";
-	print $ofh $fullstring;
-	close ($ofh);
+          return;
+}, $settings );
 
-	return;
+my $grid_string = $self->render_xml($root_element);
+
+my $fullstring = $self->render_in_template( {
+          grid_string => $grid_string
+} );
+open( my $ofh, '>:raw', $path ) or die "Failed to open output file : $!";
+print $ofh $fullstring;
+close($ofh);
+
+return;
 }
 
 =head3 translate_particle
 	Rewrite candidate - turn some internal format into something else - typically colour definitions into corresponding blocks
 =cut
 
-
 sub translate_particle {
-	my ( $self, $def ) = @_;
+    my ( $self, $def ) = @_;
 
-	return $def;
+    return $def;
 }
 
 1;
