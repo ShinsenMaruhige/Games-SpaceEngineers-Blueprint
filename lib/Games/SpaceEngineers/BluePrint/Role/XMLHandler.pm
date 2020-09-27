@@ -1,6 +1,6 @@
 package Games::SpaceEngineers::BluePrint::Role::XMLHandler;
-our $VERSION = '0.09';
-##~ DIGEST : 44f91e74d032620daa1fdba7424b150d
+our $VERSION = '0.10';
+##~ DIGEST : 9d8b2874a23fbe8f901d4f5962b32670
 # ABSTRACT: Moose role for constructing SE blueprint XML using XML::LibXML with guard rails
 use Moo::Role;
 use Carp qw/confess/;
@@ -133,40 +133,39 @@ sub render_in_template {
 	my $ep = {%{$p}};
 	$ep->{name}         ||= 'Generated Blueprint';
 	$ep->{owner_name}   ||= 'Not Applicable';
-	$ep->{EntityId}     ||= int( rand( 148783961165331809 ) );
-	$ep->{OwnerSteamId} ||= 77777777777777777;
+	$ep->{EntityId}     ||= sprintf( '%018d', int( rand( 10 ^ 18 ) ) );
+	$ep->{OwnerSteamId} ||= sprintf( '%018d', int( rand( 10 ^ 18 ) ) );
 	my $string = qq#<?xml version="1.0"?>
 <Definitions xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<ShipBlueprints>
-		<ShipBlueprint>
+		<ShipBlueprint xsi:type="MyObjectBuilder_ShipBlueprintDefinition">
 			<Id Type="MyObjectBuilder_ShipBlueprintDefinition" Subtype="$ep->{name}" />
-
 			<DisplayName>$ep->{owner_name}</DisplayName>
 			<CubeGrids>
 				<CubeGrid>
 					<EntityId>$ep->{EntityId}</EntityId>
 					<PersistentFlags>CastShadows InScene</PersistentFlags>
-          <PositionAndOrientation>
-            <Position x="0" y="0" z="0" />
-            <Forward x="-0" y="-0" z="-1" />
-            <Up x="0" y="1" z="0" />
-            <Orientation>
-              <X>0</X>
-              <Y>0</Y>
-              <Z>0</Z>
-              <W>1</W>
-            </Orientation>
-          </PositionAndOrientation>
-					<GridSizeEnum>Large</GridSizeEnum>
-						$p->{grid_string}
-					<DisplayName>$ep->{name}</DisplayName>
-          <DestructibleBlocks>true</DestructibleBlocks>
-          <CreatePhysics>false</CreatePhysics>
-          <EnableSmallToLargeConnections>false</EnableSmallToLargeConnections>
-          <IsRespawnGrid>false</IsRespawnGrid>
-          <LocalCoordSys>0</LocalCoordSys>
-          <TargetingTargets />
-        </CubeGrid>
+						<PositionAndOrientation>
+							<Position x="0" y="0" z="0" />
+							<Forward x="-0" y="-0" z="-1" />
+							<Up x="0" y="1" z="0" />
+							<Orientation>
+							  <X>0</X>
+							  <Y>0</Y>
+							  <Z>0</Z>
+							  <W>1</W>
+							</Orientation>
+						</PositionAndOrientation>
+						<GridSizeEnum>Large</GridSizeEnum>
+							$p->{grid_string}
+						<DisplayName>$ep->{name}</DisplayName>
+				  <DestructibleBlocks>true</DestructibleBlocks>
+				  <CreatePhysics>false</CreatePhysics>
+				  <EnableSmallToLargeConnections>false</EnableSmallToLargeConnections>
+				  <IsRespawnGrid>false</IsRespawnGrid>
+				  <LocalCoordSys>0</LocalCoordSys>
+				  <TargetingTargets />
+				</CubeGrid>
 			</CubeGrids>
 			<WorkshopId>0</WorkshopId>
 			<OwnerSteamId>$ep->{OwnerSteamId}</OwnerSteamId>
