@@ -1,0 +1,9 @@
+{
+	"defaults" : {
+		"SubtypeName" : "LargeHeavyBlockArmorBlock",
+		"size" : "Large"
+	},
+	"map" : {
+		"255,255,255" : "LargeHeavyBlockArmorBlock"
+	}
+}

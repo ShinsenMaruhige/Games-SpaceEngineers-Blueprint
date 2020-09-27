@@ -1,7 +1,7 @@
 package Games::SpaceEngineers::BluePrint;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
-##~ DIGEST : 6ed83702a662dc7a597c893f4dcb00ab
+##~ DIGEST : 051fae3d54661b765e3277dec7c794ef
 
 use Moo;
 
@@ -42,3 +42,5 @@ sub add_cube {
 	$cube->addChild( $deform );
 	return $cube;
 }
+
+1;
